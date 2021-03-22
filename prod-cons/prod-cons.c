@@ -5,10 +5,10 @@
 
 #define QUEUESIZE 10
 #define PRO_LOOP 10
-#define NUM_OF_PRO 100
+#define NUM_OF_PRO 200
 #define NUM_OF_CON 100
 
-int _arg = 2;
+int _arg = 0;
 int worksFinished = 0;
 int proFinished = 0;
 int conFinished = 0;
@@ -31,15 +31,15 @@ typedef struct {
 
 void * print(int arg)
 {
-  printf("Hello! Work number = %d, arg = %d\n", ++worksFinished, arg);
+  printf("Work number %d is executed, arg = %d.\n", ++worksFinished, arg);
 }
 
-queue *queueInit (void);
+queue *queueInit(void);
 void queueDelete (queue *q);
 void queueAdd (queue *q, struct workFunction *in);
 void queueDel (queue *q, struct workFunction out);
 
-int main ()
+int main()
 {
   queue *fifo;
   pthread_t pro[NUM_OF_PRO];
@@ -47,7 +47,7 @@ int main ()
   int rc;
   long t;
 
-  fifo = queueInit ();
+  fifo = queueInit();
   
   if (fifo ==  NULL) {
     fprintf (stderr, "Main: Queue Init failed.\n");
@@ -83,7 +83,7 @@ int main ()
   return 0;
 }
 
-void *producer (void *q)
+void *producer(void *q)
 {
   queue *fifo;
   fifo = (queue *)q;
@@ -98,7 +98,7 @@ void *producer (void *q)
       pthread_cond_wait (fifo->notFull, fifo->mut);
     }
     queueAdd (fifo, &func);
-    printf("A producer added to queue.\n");
+    printf("A producer added a work to queue.\n");
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notEmpty);
   }
@@ -108,7 +108,7 @@ void *producer (void *q)
   pthread_mutex_unlock (fifo->mut);
 
   if (proFinished == NUM_OF_PRO) {
-    printf("I am the last producer.\n");
+    // printf("I am the last producer.\n");
     while (conFinished != NUM_OF_CON) {
       // printf("Last producer sends signal to unblock the blocked consumers.\n");
       pthread_cond_broadcast(fifo->notEmpty);
@@ -118,7 +118,7 @@ void *producer (void *q)
   return (NULL);
 }
 
-void *consumer (void *q)
+void *consumer(void *q)
 {
   queue *fifo;
   fifo = (queue *)q;
@@ -131,13 +131,13 @@ void *consumer (void *q)
       if (fifo->empty && proFinished == NUM_OF_PRO) {
         conFinished++;
         pthread_mutex_unlock (fifo->mut);
-        printf("Consumer %d finished the work.\n", conFinished);
+        printf("A consumer finished all of its works (%d consumers total).\n", conFinished);
         return (NULL);
       }
       pthread_cond_wait (fifo->notEmpty, fifo->mut);
     }
     queueDel (fifo, d_func);
-    printf("A consumer removed from queue.\n");
+    printf("A consumer removed a work from queue.\n");
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notFull);
   }
@@ -146,7 +146,7 @@ void *consumer (void *q)
   // return (NULL);
 }
 
-queue *queueInit (void)
+queue *queueInit(void)
 {
   queue *q;
 
@@ -167,7 +167,7 @@ queue *queueInit (void)
   return (q);
 }
 
-void queueDelete (queue *q)
+void queueDelete(queue *q)
 {
   pthread_mutex_destroy (q->mut);
   free (q->mut);	
@@ -178,7 +178,7 @@ void queueDelete (queue *q)
   free (q);
 }
 
-void queueAdd (queue *q,  struct workFunction *in)
+void queueAdd(queue *q,  struct workFunction *in)
 {
   q->buf[q->tail] = *in;
   q->tail++;
@@ -192,11 +192,9 @@ void queueAdd (queue *q,  struct workFunction *in)
   return;
 }
 
-void queueDel (queue *q, struct workFunction out)
+void queueDel(queue *q, struct workFunction out)
 {
   out = q->buf[q->head];
-  // printf("%d\n", *(int *)q->buf[q->head].arg);
-  // printf("%d\n", *(int *)out.arg);
   ((void(*)())out.work)(*(int *)out.arg);
 
   q->head++;
