@@ -1,13 +1,7 @@
-#include <pthread.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/time.h>
-
 #define QUEUESIZE 10
 #define PRO_LOOP 10
-#define NUM_OF_PRO 100
-#define NUM_OF_CON 100
+#define NUM_OF_PRO 8
+#define NUM_OF_CON 8
 
 int _arg = 0;
 int worksFinished = 0;
@@ -44,55 +38,6 @@ queue *queueInit(void);
 void queueDelete (queue *q);
 void queueAdd (queue *q, struct workFunction *in);
 void queueDel (queue *q, struct workFunction out);
-
-int main()
-{
-  int NUM_OF_WORKS = PRO_LOOP * NUM_OF_PRO;
-
-  queue *fifo;
-  pthread_t pro[NUM_OF_PRO];
-  pthread_t con[NUM_OF_CON];
-  int rc;
-  long t;
-
-  fifo = queueInit();
-  
-  if (fifo ==  NULL) {
-    fprintf (stderr, "Main: Queue Init failed.\n");
-    exit (1);
-  }
-
-  for (t = 0; t < NUM_OF_PRO; t++) {
-    rc = pthread_create(&pro[t], NULL, producer, fifo);
-    if (rc) {
-        printf("Error: return code from pthread_create() is %d\n", rc);
-        exit(-1);
-    }
-  }
-
-  for (t = 0; t < NUM_OF_CON; t++) {
-    rc = pthread_create(&con[t], NULL, consumer, fifo);
-    if (rc) {
-        printf("Error: return code from pthread_create() is %d\n", rc);
-        exit(-1);
-    }
-  }
-
-  for (int i = 0; i < NUM_OF_PRO; i++) {
-    pthread_join(pro[i], NULL);
-  }
-
-  for (int i = 0; i < NUM_OF_CON; i++) {
-    pthread_join(con[i], NULL);
-  }
-
-  queueDelete (fifo);
-
-  averageWaitTime = (delTimeSum - addTimeSum) / NUM_OF_WORKS;
-  printf("Average waiting time in queue per work = %lf seconds.\n", averageWaitTime);
-
-  return 0;
-}
 
 void *producer(void *q)
 {

@@ -1,5 +1,3 @@
-prod-cons/demo.c
-prod-cons/demo
-prod-cons/prod-cons
+prod-cons/build
 prod-cons/docker
 .vscode
