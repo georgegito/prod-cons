@@ -13,7 +13,7 @@ int main(int argc, char** argv)
 
   int NUM_OF_PRO = atoi(argv[1]);
   int NUM_OF_CON = atoi(argv[2]);
-  int NUM_OF_WORKS = PRO_LOOP * NUM_OF_PRO;
+  int NUM_OF_WORKS = WORKS_PER_PRO * NUM_OF_PRO;
 
   printf("\nNumber of producers: %d.\nNumber of consumers: %d.\n\n", NUM_OF_PRO, NUM_OF_CON);
 

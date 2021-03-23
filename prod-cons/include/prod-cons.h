@@ -1,5 +1,5 @@
 #define QUEUESIZE 10
-#define PRO_LOOP 50
+#define WORKS_PER_PRO 50
 
 int workIndex = 0;
 int proFinished = 0;
@@ -40,7 +40,7 @@ void *producer(void *q)
   queue *fifo;
   fifo = (queue *)q;
 
-  for (int i = 0; i < PRO_LOOP; i++) {
+  for (int i = 0; i < WORKS_PER_PRO; i++) {
     struct workFunction * _func = (struct workFunction *)malloc(sizeof(struct workFunction));
     _func->work = (void *)print;
     _func->arg = malloc(sizeof(int));
