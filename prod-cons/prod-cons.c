@@ -2,16 +2,22 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 #define QUEUESIZE 10
 #define PRO_LOOP 10
-#define NUM_OF_PRO 200
+#define NUM_OF_PRO 100
 #define NUM_OF_CON 100
 
 int _arg = 0;
 int worksFinished = 0;
 int proFinished = 0;
 int conFinished = 0;
+double addTimeSum = 0;
+double delTimeSum = 0;
+double tempTime1, tempTime2;
+double averageWaitTime;
+struct timeval t1, t2;
 
 void *producer (void *args);
 void *consumer (void *args);
@@ -41,6 +47,8 @@ void queueDel (queue *q, struct workFunction out);
 
 int main()
 {
+  int NUM_OF_WORKS = PRO_LOOP * NUM_OF_PRO;
+
   queue *fifo;
   pthread_t pro[NUM_OF_PRO];
   pthread_t con[NUM_OF_CON];
@@ -80,6 +88,9 @@ int main()
 
   queueDelete (fifo);
 
+  averageWaitTime = (delTimeSum - addTimeSum) / NUM_OF_WORKS;
+  printf("Average waiting time in queue per work = %lf seconds.\n", averageWaitTime);
+
   return 0;
 }
 
@@ -94,16 +105,26 @@ void *producer(void *q)
   for (int i = 0; i < PRO_LOOP; i++) {
     pthread_mutex_lock (fifo->mut);
     while (fifo->full) {
-      printf ("Producer: queue FULL.\n");
+      // printf ("Producer: queue FULL.\n");
       pthread_cond_wait (fifo->notFull, fifo->mut);
     }
+
+    gettimeofday(&t1, NULL);
+
     queueAdd (fifo, &func);
-    printf("A producer added a work to queue.\n");
+
+    // record the time of adding
+    tempTime1 = t1.tv_sec * 1e6; 
+    tempTime1 = (tempTime1 + t1.tv_usec) * 1e-6; 
+    addTimeSum += tempTime1;
+    
+    // printf("A producer added a work to queue.\n");
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notEmpty);
   }
 
-  pthread_mutex_lock (fifo->mut);   // mutex to avoid data race
+  // mutex to avoid data race
+  pthread_mutex_lock (fifo->mut);
   proFinished++;
   pthread_mutex_unlock (fifo->mut);
 
@@ -127,23 +148,29 @@ void *consumer(void *q)
   while(1) {
     pthread_mutex_lock (fifo->mut);
     while (fifo->empty) {
-      printf ("Consumer: queue EMPTY.\n");
+      // printf ("Consumer: queue EMPTY.\n");
       if (fifo->empty && proFinished == NUM_OF_PRO) {
         conFinished++;
         pthread_mutex_unlock (fifo->mut);
-        printf("A consumer finished all of its works (%d consumers total).\n", conFinished);
+        // printf("A consumer finished all of its works (%d consumers total).\n", conFinished);
         return (NULL);
       }
       pthread_cond_wait (fifo->notEmpty, fifo->mut);
     }
+
+    gettimeofday(&t2, NULL);
+
     queueDel (fifo, d_func);
-    printf("A consumer removed a work from queue.\n");
+
+    // record the time of deleting
+    tempTime2 = t2.tv_sec * 1e6; 
+    tempTime2 = (tempTime2 + t2.tv_usec) * 1e-6; 
+    delTimeSum += tempTime2;
+
+    // printf("A consumer removed a work from queue.\n");
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notFull);
   }
-
-  // conFinished++;
-  // return (NULL);
 }
 
 queue *queueInit(void)
