@@ -8,8 +8,10 @@
 int main(int argc, char** argv)
 {
 /* ----------------------------- init variables ----------------------------- */
-  if (argc != 3)
+  if (argc != 3) {
+    printf("\nPlease give NUM_OF_PRO and NUM_OF_CON arguments.\n\n");
     return 1;
+  }
 
   int NUM_OF_PRO = atoi(argv[1]);
   int NUM_OF_CON = atoi(argv[2]);

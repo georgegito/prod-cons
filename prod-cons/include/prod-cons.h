@@ -33,7 +33,7 @@ void * print(int arg)
 queue *queueInit(int NUM_OF_PRO, int NUM_OF_CON);
 void queueDelete(queue *q);
 void queueAdd(queue *q, struct workFunction *in);
-void queueDel(queue *q, struct workFunction *out);
+void queueDel(queue *q, struct workFunction **out);
 
 void *producer(void *q)
 {
@@ -80,7 +80,7 @@ void *consumer(void *q)
   fifo = (queue *)q;
 
   while(1) {
-    struct workFunction * d_func;
+    struct workFunction * exec_func;
     pthread_mutex_lock(fifo->mut);
     while (fifo->empty) {
       // printf ("Consumer: queue EMPTY.\n");
@@ -93,7 +93,12 @@ void *consumer(void *q)
       pthread_cond_wait(fifo->notEmpty, fifo->mut);
     }
 
-    queueDel(fifo, d_func);
+    queueDel(fifo, &exec_func);
+    // printf("A consumer removed work %d from the queue.\n", *((int*)exec_func->arg));
+
+/* --------------------------- function execution --------------------------- */
+    ((void(*)())exec_func->work)(*(int *)exec_func->arg);
+/* -------------------------------------------------------------------------- */
 
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notFull);
@@ -156,23 +161,18 @@ void queueAdd(queue *q,  struct workFunction *in)
   return;
 }
 
-void queueDel(queue *q, struct workFunction *out)
+void queueDel(queue *q, struct workFunction **out)
 {
-  out = q->buf[q->head];
+  *out = q->buf[q->head];
 
 /* ---------------------------------- timer --------------------------------- */
   gettimeofday(&t2, NULL);
   double delTime = t2.tv_sec * 1e6;
   delTime = (delTime + t2.tv_usec) * 1e-6;
-  double waitTime = delTime - out->addTime;
+  double waitTime = delTime - (*out)->addTime;
   // printf("Waiting time = %lf seconds\n", waitTime);
   waitTimeSum += waitTime; // already mutex locked
 /* -------------------------------------------------------------------------- */
-
-  ((void(*)())out->work)(*(int *)out->arg);
-  // printf("A consumer removed work %d from the queue.\n", *((int*)out->arg));
-  free(out->arg);
-  free(out);
 
   q->head++;
   if (q->head == QUEUESIZE)
