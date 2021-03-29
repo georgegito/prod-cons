@@ -1,4 +1,4 @@
-# Embeded Systems Project
+# Embedded Systems Project
 
 * **part 1**: Parallel implementation of producer-consumer queue in C using P-Threads.
 
