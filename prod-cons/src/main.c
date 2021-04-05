@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/time.h>
-#include <prod-cons.h>
+#include <prod-cons.c>
 
 int main(int argc, char** argv)
 {
