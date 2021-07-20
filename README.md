@@ -1,6 +1,6 @@
-# Embedded Systems Project
+# Producer - Consumer Queue
 
-* **part 1**: Parallel implementation of producer-consumer queue in C using P-Threads.
+* Parallel implementation of producer - consumer queue in C using P-Threads.
 
 ## Build instructions
 
