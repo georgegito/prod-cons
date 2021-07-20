@@ -1,6 +1,6 @@
 # Producer - Consumer Queue
 
-* Parallel implementation of producer-consumer queue in C using P-Threads.
+* Parallel implementation of producer - consumer queue in C using P-Threads.
 
 ## Build instructions
 
